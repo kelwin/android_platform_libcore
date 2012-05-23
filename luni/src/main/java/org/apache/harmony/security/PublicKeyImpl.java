@@ -58,6 +58,15 @@ public class PublicKeyImpl implements PublicKey {
         return result;
     }
 
+    /**
+     * Hack to get key from Cipher class
+     * @hide
+     */
+    public byte[] getKey() {
+        byte[] result = new byte[encoding.length];
+        System.arraycopy(encoding, 0, result, 0, encoding.length);
+        return result;
+    }
 
     public void setAlgorithm(String algorithm) {
         this.algorithm = algorithm;

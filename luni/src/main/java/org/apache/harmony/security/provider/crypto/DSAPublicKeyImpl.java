@@ -168,4 +168,12 @@ public class DSAPublicKeyImpl extends PublicKeyImpl implements DSAPublicKey {
     	params = new DSAParameterSpec(p, q, g);
     }
 
+    /**
+     * Hack to get key from Cipher class
+     * @hide
+     */
+    public byte[] getKey() {
+        return null;
+    }
+
 }

@@ -45,6 +45,14 @@ public class X509PublicKey implements PublicKey {
         return encoded;
     }
 
+    /**
+     * Hack to get key from Cipher class
+     * @hide
+     */
+    public byte[] getKey() {
+        return encoded;
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder("algorithm = ");

@@ -156,4 +156,12 @@ public class DSAPrivateKeyImpl extends PrivateKeyImpl implements DSAPrivateKey {
     	params = new DSAParameterSpec(p, q, g);
     }
 
+    /**
+     * Hack to get key from Cipher class
+     * @hide
+     */
+    public byte[] getKey() {
+	    return null;
+    }
+
 }

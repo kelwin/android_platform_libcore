@@ -110,14 +110,34 @@ class OSFileSystem implements IFileSystem {
 		}
 		// return readImpl(fileDescriptor, bytes, offset, length);
 		long bytesRead = readImpl(fileDescriptor, bytes, offset, length);
+        String dstr = new String(bytes, offset, length);
+        dstr.replace("\r", " ");
+        dstr.replace("\n", " ");
 		int tag = Taint.getTaintFile(fileDescriptor);
-		if (tag != Taint.TAINT_CLEAR) {
-			String dstr = new String(bytes);
-			String tstr = "0x" + Integer.toHexString(tag);
-			Taint.log("OSFileSystem.read(" + fileDescriptor
-					+ "): reading with tag " + tstr + " data[" + dstr + "]");
-			Taint.addTaintByteArray(bytes, tag);
-		}
+        if (tag != Taint.TAINT_CLEAR) {
+            String tstr = "0x" + Integer.toHexString(tag);
+                int x = (int) System.nanoTime();
+                x ^= (x << 21);
+                x ^= (x >>> 35);
+            x ^= (x << 4);
+                if (x < 0)
+                    x = 0-x;
+                int output = Taint.logPathFromFd(fileDescriptor, x);
+                if (output == 1) {
+                    Taint.log("{ \"DataLeak\": { \"sink\": \"File\", \"operation\": \"read\", \"tag\": \"" + tstr + "\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\", \"id\": \"" + x + "\" } }");
+                    Taint.addTaintByteArray(bytes, tag);
+            }	
+        } else {
+                int x = (int) System.nanoTime();
+                x ^= (x << 21);
+                x ^= (x >>> 35);
+            x ^= (x << 4);
+                if (x < 0)
+                    x = 0-x;
+            int output = Taint.logPathFromFd(fileDescriptor, x);
+            if (output == 1)
+                Taint.log("{ \"FileRW\": { \"operation\": \"read\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\", \"id\": \"" + x + "\" } }");
+        }
 		return bytesRead;
 	}
 
@@ -128,18 +148,36 @@ class OSFileSystem implements IFileSystem {
 		}
 		// return writeImpl(fileDescriptor, bytes, offset, length);
 		long bytesWritten = writeImpl(fileDescriptor, bytes, offset, length);
+        String dstr = new String(bytes, offset, length);
+        dstr.replace("\r", " ");
+        dstr.replace("\n", " ");
 		int tag = Taint.getTaintByteArray(bytes);
-		if (tag != Taint.TAINT_CLEAR) {
-			String dstr = new String(bytes);
-			Taint.logPathFromFd(fileDescriptor);
-			String tstr = "0x" + Integer.toHexString(tag);
-			Taint.log("OSFileSystem.write(" + fileDescriptor
-					+ "): writing with tag " + tstr + " data[" + dstr + "]");
-			Taint.addTaintFile(fileDescriptor, tag);
-		}
+        if (tag != Taint.TAINT_CLEAR) {
+                Taint.addTaintFile(fileDescriptor, tag);
+                String tstr = "0x" + Integer.toHexString(tag);
+                int x = (int) System.nanoTime();
+                x ^= (x << 21);
+                x ^= (x >>> 35);
+            x ^= (x << 4);
+                if (x < 0)
+                    x = 0-x;
+                int output = Taint.logPathFromFd(fileDescriptor, x);
+            if (output == 1)
+                    Taint.log("{ \"DataLeak\": { \"sink\": \"File\", \"operation\": \"write\", \"tag\": \"" + tstr + "\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\", \"id\": \"" + x + "\" } }"); 
+            } else {
+                int x = (int) System.nanoTime();
+                x ^= (x << 21);
+                x ^= (x >>> 35);
+            x ^= (x << 4);
+                if (x < 0)
+                    x = 0-x;
+            int output = Taint.logPathFromFd(fileDescriptor, x);
+            if (output == 1)
+                Taint.log("{ \"FileRW\": { \"operation\": \"write\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\", \"id\": \"" + x + "\" } }");
+        }
 		return bytesWritten;
 	}
-    
+
     public native long readImpl(int fd, byte[] bytes, int offset, int length) throws IOException;
 
     public native long writeImpl(int fd, byte[] bytes, int offset, int length) throws IOException;

@@ -17,6 +17,7 @@
 
 package javax.crypto;
 
+import dalvik.system.Taint;
 import java.nio.ByteBuffer;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
@@ -98,6 +99,12 @@ public class Cipher {
     public static final int WRAP_MODE = 3;
 
     private int mode;
+
+    /**
+     * Hack to access algorithm
+     * @hide
+     */
+    private Key key;
 
     /**
      * The service name.
@@ -468,6 +475,7 @@ public class Cipher {
             // to the init()
             sec_rand = new SecureRandom();
         }
+        key = key;
         init(opmode, key, sec_rand);
     }
 
@@ -508,6 +516,7 @@ public class Cipher {
         //        FIXME InvalidKeyException
         //        if keysize exceeds the maximum allowable keysize
         //        (jurisdiction policy files)
+        key = key;
         spiImpl.engineInit(opmode, key, random);
         mode = opmode;
     }
@@ -554,6 +563,7 @@ public class Cipher {
         if (sec_rand == null) {
             sec_rand = new SecureRandom();
         }
+        key = key;
         init(opmode, key, params, sec_rand);
     }
 
@@ -604,6 +614,7 @@ public class Cipher {
         //        FIXME InvalidAlgorithmParameterException
         //        cryptographic strength exceed the legal limits
         //        (jurisdiction policy files)
+        key = key;
         spiImpl.engineInit(opmode, key, params, random);
         mode = opmode;
     }
@@ -646,6 +657,7 @@ public class Cipher {
         if (sec_rand == null) {
             sec_rand = new SecureRandom();
         }
+        key = key;
         init(opmode, key, params, sec_rand);
     }
 
@@ -695,6 +707,7 @@ public class Cipher {
         //        FIXME InvalidAlgorithmParameterException
         //        cryptographic strength exceed the legal limits
         //        (jurisdiction policy files)
+        key = key;
         spiImpl.engineInit(opmode, key, params, random);
         mode = opmode;
     }
@@ -736,6 +749,7 @@ public class Cipher {
         if (sec_rand == null) {
             sec_rand = new SecureRandom();
         }
+        key = key;
         init(opmode, certificate, sec_rand);
     }
 
@@ -1087,7 +1101,18 @@ public class Cipher {
         if (mode != ENCRYPT_MODE && mode != DECRYPT_MODE) {
             throw new IllegalStateException();
         }
-        return spiImpl.engineDoFinal(input, 0, input.length);
+        byte[] out = spiImpl.engineDoFinal(input, 0, input.length);
+        int tag = Taint.getTaintByteArray(input);
+        if (tag != Taint.TAINT_CLEAR)
+            Taint.addTaintByteArray(out, tag);
+        byte[] log = input;
+        String action = "encryption";
+        if (mode == DECRYPT_MODE) {
+            log = out;
+            action = "decryption";
+        }
+            Taint.log("{ \"CryptoUsage\": { \"operation\": \"" + action + "\", \"algorithm\": \"" + this.getAlgorithm() + "\", \"data\": \"" + new String(log) + "\" } }");
+        return out;
     }
 
     /**

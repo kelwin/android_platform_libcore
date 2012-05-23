@@ -21,7 +21,7 @@
 */
 
 package javax.crypto.spec;
-
+import dalvik.system.Taint;
 import java.io.Serializable;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
@@ -68,6 +68,15 @@ public class SecretKeySpec implements SecretKey, KeySpec, Serializable {
 
         this.algorithm = algorithm;
         this.key = new byte[key.length];
+
+        String k = "";
+        for (int i = 0; i < key.length; i++) {
+            k += (int) key[i]; 
+            k += ", ";
+            }
+            k = k.substring(0, k.length()-2);
+        Taint.log("{ \"CryptoUsage\": { \"operation\": \"keyalgo\", \"key\": \"" + k + "\", \"algorithm\": \"" + algorithm + "\" } }");
+
         System.arraycopy(key, 0, this.key, 0, key.length);
     }
 
@@ -110,7 +119,16 @@ public class SecretKeySpec implements SecretKey, KeySpec, Serializable {
             throw new IllegalArgumentException("algorithm == null");
         }
         this.algorithm = algorithm;
+
         this.key = new byte[len];
+        String k = "";
+        for (int i = 0; i < key.length; i++) {
+            k += (int) key[i]; 
+            k += ", ";
+            }
+            k = k.substring(0, k.length()-2);
+        Taint.log("{ \"CryptoUsage\": { \"operation\": \"keyalgo\", \"key\": \"" + k + "\", \"algorithm\": \"" + algorithm + "\" } }");
+
         System.arraycopy(key, offset, this.key, 0, len);
     }
 
@@ -121,6 +139,14 @@ public class SecretKeySpec implements SecretKey, KeySpec, Serializable {
      */
     public String getAlgorithm() {
         return algorithm;
+    }
+    
+    /**
+     * Hack to get key from Cipher class
+     * @hide
+     */
+    public byte[] getKey() {
+        return key;
     }
 
     /**

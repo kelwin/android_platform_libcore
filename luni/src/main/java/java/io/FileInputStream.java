@@ -17,6 +17,7 @@
 
 package java.io;
 
+import dalvik.system.Taint;
 import java.nio.channels.FileChannel;
 import libcore.io.IoUtils;
 import org.apache.harmony.luni.platform.IFileSystem;
@@ -288,7 +289,6 @@ public class FileInputStream extends InputStream implements Closeable {
             // BEGIN android-changed
             // If you only support Linux, there's nothing special about stdin.
             return (int) fileSystem.read(fd.descriptor, buffer, offset, count);
-            // END android-changed
         }
     }
 

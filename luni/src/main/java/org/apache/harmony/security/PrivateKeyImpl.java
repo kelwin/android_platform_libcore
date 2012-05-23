@@ -54,6 +54,18 @@ public class PrivateKeyImpl implements PrivateKey {
         return toReturn;
     }
 
+    /**
+     * Hack to get key from Cipher class
+     * @hide
+     */
+    public byte[] getKey() {
+
+        byte[] toReturn = new byte[encoding.length];
+        System.arraycopy(encoding, 0, toReturn, 0, encoding.length);
+
+        return toReturn;
+    }
+
     public void setAlgorithm(String algorithm) {
         this.algorithm = algorithm;
     }

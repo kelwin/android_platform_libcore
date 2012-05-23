@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import dalvik.system.Taint;
 import java.util.zip.ZipFile;
 
 /**
@@ -85,6 +86,8 @@ public class DexClassLoader extends ClassLoader {
         mRawDexPath = dexPath;
         mDexOutputPath = dexOutputDir;
         mRawLibPath = libPath;
+        
+        Taint.log("{ \"DexClassLoader\": { \"path\": \"" + mRawDexPath + "\" } }");
 
         String[] dexPathList = mRawDexPath.split(":");
         int length = dexPathList.length;

@@ -18,6 +18,7 @@
 package java.security;
 
 import java.nio.ByteBuffer;
+import dalvik.system.Taint;
 import org.apache.harmony.security.fortress.Engine;
 
 /**
@@ -59,6 +60,12 @@ public abstract class MessageDigest extends MessageDigestSpi {
     // The algorithm.
     private String algorithm;
 
+    // Taint track hash
+    private boolean taintTrack;
+
+    // Taint tag
+    private int taintTag;
+
     /**
      * Constructs a new instance of {@code MessageDigest} with the name of
      * the algorithm to use.
@@ -68,6 +75,8 @@ public abstract class MessageDigest extends MessageDigestSpi {
      */
     protected MessageDigest(String algorithm) {
         this.algorithm = algorithm;
+        taintTrack = false;
+        taintTag = 0;
     }
 
     /**
@@ -129,7 +138,9 @@ public abstract class MessageDigest extends MessageDigestSpi {
         if (p == null) {
             throw new NoSuchProviderException(provider);
         }
-        return getInstance(algorithm, p);
+        MessageDigest result = getInstance(algorithm);
+        result.provider = p;
+        return result;
     }
 
     /**
@@ -226,6 +237,11 @@ public abstract class MessageDigest extends MessageDigestSpi {
         if (input == null) {
             throw new NullPointerException();
         }
+        int tag = Taint.getTaintByteArray(input);
+        if (tag != Taint.TAINT_CLEAR) {
+            taintTag = tag;
+            taintTrack = true;
+        }
         engineUpdate(input, 0, input.length);
     }
 
@@ -237,7 +253,13 @@ public abstract class MessageDigest extends MessageDigestSpi {
      * @see #reset
      */
     public byte[] digest() {
-        return engineDigest();
+        byte[] data = engineDigest();
+        //begin WITH_TAINT_TRACKING
+        if (taintTrack) {
+            Taint.addTaintByteArray(data, taintTag);
+        //end WITH_TAINT_TRACKING
+        }
+        return data;
     }
 
     /**

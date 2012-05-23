@@ -75,6 +75,7 @@ public final class FileDescriptor {
      */
     public FileDescriptor() {
         super();
+        this.id++;
     }
 
     /**
@@ -115,10 +116,28 @@ public final class FileDescriptor {
     public boolean hasName = false;
 
     /**
+     * Hack for printing out port number
+     * @hide
+     */
+    public int port = 0;
+
+    /**
+     * Hack for keeping track of descriptors
+     * @hide
+     */
+    public static int id = 0;
+
+    /**
      * hack for printing out IP address
      * @hide
      */
     public String name = null;
+
+    /**
+     * hack for buffering read data
+     * @hide
+     */
+    public String readBuffer = "";
 
     /**
      * hack for setting file taint

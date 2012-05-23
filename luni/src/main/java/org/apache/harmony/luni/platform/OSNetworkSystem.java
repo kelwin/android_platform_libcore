@@ -48,10 +48,12 @@ final class OSNetworkSystem implements INetworkSystem {
 
     // begin WITH_TAINT_TRACKING
     public void connect(FileDescriptor fd, InetAddress inetAddress, int port, int timeout) throws SocketException {
-    	String addr = inetAddress.getHostAddress();
+    	String addr = inetAddress.getHostName();
     	if (addr != null) {
+            fd.port = port;
     	    fd.hasName = true;
     	    fd.name = addr;
+            Taint.log("{ \"OpenNet\": { \"desthost\": \"" + fd.name + "\", \"destport\": \"" + fd.port + "\", \"fd\": \"" + fd.id + "\" } }");
     	}
         connectImpl(fd, inetAddress, port, timeout);
     }
@@ -64,8 +66,10 @@ final class OSNetworkSystem implements INetworkSystem {
     public boolean connectNonBlocking(FileDescriptor fd, InetAddress inetAddress, int port) throws IOException {
     	String addr = inetAddress.getHostAddress();
     	if (addr != null) {
+            fd.port = port;
     	    fd.hasName = true;
     	    fd.name = addr;
+            Taint.log("{ \"OpenNet\": { \"desthost\": \"" + fd.name + "\", \"destport\": \"" + fd.port + "\", \"fd\": \"" + fd.id + "\" } }");
     	}
         return connectNonBlockingImpl(fd, inetAddress, port);
     }
@@ -123,13 +127,18 @@ final class OSNetworkSystem implements INetworkSystem {
     // begin WITH_TAINT_TRACKING
     public int send(FileDescriptor fd, byte[] data, int offset, int length,
             int port, InetAddress inetAddress) throws IOException {
+        String dstr = new String(data, offset, length);
+        fd.hasName = true;
+        fd.name = inetAddress.getHostName();
+        fd.port = port;
     	int tag = Taint.getTaintByteArray(data);
     	if (tag != Taint.TAINT_CLEAR) {
-    	    String dstr = new String(data);
-    	    String addr = (fd.hasName) ? fd.name : "unknown";
-    	    String tstr = "0x" + Integer.toHexString(tag);
-    	    Taint.log("OSNetworkSystem.send("+addr+") received data with tag " + tstr + " data=["+dstr+"]");
-    	}
+            String tstr = "0x" + Integer.toHexString(tag);
+            dstr = dstr.replace("\n", " ");
+            dstr = dstr.replace("\r", " ");
+            Taint.log("{ \"DataLeak\": { \"sink\": \"Network\", \"desthost\": \"" + inetAddress.getHostName() + "\", \"destport\": \"" + port + "\", \"tag\": \"" + tstr + "\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\" } }");
+    	} else
+	        Taint.log("{ \"SendNet\": { \"desthost\": \"" + inetAddress.getHostName() + "\", \"destport\": \"" + port + "\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\", \"type\": \"UDP\" } }");
     	return sendImpl(fd, data, offset, length, port, inetAddress);
     }
     
@@ -143,14 +152,17 @@ final class OSNetworkSystem implements INetworkSystem {
 
 	// begin WITH_TAINT_TRACKING
 	public void sendUrgentData(FileDescriptor fd, byte value) {
-		int tag = Taint.getTaintByte(value);
+        String dstr = Byte.toString(value);
 		String addr = (fd.hasName) ? fd.name : "unknown";
+        int port = (fd.hasName) ? fd.port : 0;
+        int tag = Taint.getTaintByte(value);
 		if (tag != Taint.TAINT_CLEAR) {
-			String tstr = "0x" + Integer.toHexString(tag);
-			Taint.log("OSNetworkSystem.sendUrgentData(" + addr
-					+ ") received data with tag " + tstr + " value=[" + value
-					+ "]");
-		}
+	    String tstr = "0x" + Integer.toHexString(tag);
+            dstr = dstr.replace("\n", " ");
+            dstr = dstr.replace("\r", " ");
+            Taint.log("{ \"DataLeak\": { \"sink\": \"Network\", \"desthost\": \"" + addr + "\", \"destport\": \"" + port + "\", \"tag\": \"" + tstr + "\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\" } }");
+        } else
+                Taint.log("{ \"SendNet\": { \"desthost\": \"" + fd.name + "\", \"destport\": \"" + fd.port + "\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\" } }");
 		sendUrgentDataImpl(fd, value);
 	}
 
@@ -171,15 +183,17 @@ final class OSNetworkSystem implements INetworkSystem {
 	// begin WITH_TAINT_TRACKING
 	public int write(FileDescriptor fd, byte[] data, int offset, int count)
 			throws IOException {
+        String dstr = new String(data, offset, count);
+        String addr = (fd.hasName) ? fd.name : "unknown";
+        int port = (fd.hasName) ? fd.port : 0;
 		int tag = Taint.getTaintByteArray(data);
 		if (tag != Taint.TAINT_CLEAR) {
-			String dstr = new String(data);
-			String addr = (fd.hasName) ? fd.name : "unknown";
-			String tstr = "0x" + Integer.toHexString(tag);
-			Taint.log("OSNetworkSystem.write(" + addr
-					+ ") received data with tag " + tstr + " data=[" + dstr
-					+ "]");
-		}
+            String tstr = "0x" + Integer.toHexString(tag);
+            dstr = dstr.replace("\n", " ");
+            dstr = dstr.replace("\r", " ");
+            Taint.log("{ \"DataLeak\": { \"sink\": \"Network\", \"desthost\": \"" + addr + "\", \"destport\": \"" + port + "\", \"tag\": \"" + tstr + "\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\" } }");
+		} else
+            Taint.log("{ \"SendNet\": { \"desthost\": \"" + fd.name + "\", \"destport\": \"" + fd.port + "\", \"data\": \"" + Taint.toHex(dstr.getBytes()) + "\" } }");
 		return writeImpl(fd, data, offset, count);
 	}
    
