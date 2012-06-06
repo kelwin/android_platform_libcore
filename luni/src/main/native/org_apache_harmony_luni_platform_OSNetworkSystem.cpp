@@ -746,6 +746,27 @@ static jint OSNetworkSystem_readDirect(JNIEnv* env, jobject, jobject fileDescrip
             return 0;
         }
     } else {
+    int port = fd.getPort();
+    int id = fd.getId();
+    jstring name = fd.getName();
+		const char* srchost = env->GetStringUTFChars(name, 0);
+    int len = strlen((char*)dst);
+    char* hex = new char[len * 2 + 1];
+    int i;
+    for (i = 0; i < len; i++)
+    {
+        if ((char)dst[i] == '\n' || (char)dst[i] == '\r')
+        {
+            sprintf(&hex[2*i], "%02x", ' ');
+            continue;
+        }
+        sprintf(&hex[2*i], "%02x", dst[i]);
+    }
+    hex[strlen((char*)dst) * 2 + 1] = '\0';
+
+        LOGW("DroidBox: {\"RecvNet\": { \"srchost\": \"%s\", \"srcport\": \"%d\", \"data\": \"%s\", \"fd\":\"%d\", \"type\": \"TCP\" } }", srchost, port, hex, id);
+        delete[] hex;
+				env->ReleaseStringUTFChars(name, srchost);
         return bytesReceived;
     }
 }
@@ -812,6 +833,28 @@ static jint OSNetworkSystem_recvDirect(JNIEnv* env, jobject, jobject fileDescrip
             env->SetIntField(packet, gCachedFields.dpack_port, port);
         }
     }
+    int port = fd.getPort();
+    int id = fd.getId();
+    jstring name = fd.getName();
+		const char* srchost = env->GetStringUTFChars(name, 0);
+    int len = strlen((char*)buf);
+    char* hex = new char[len * 2 + 1];
+    int i;
+    for (i = 0; i < len; i++)
+    {
+        if ((char)buf[i] == '\n' || (char)buf[i] == '\r')
+        {
+            sprintf(&hex[2*i], "%02x", ' ');
+            continue;
+        }
+        sprintf(&hex[2*i], "%02x", buf[i]);
+    }
+    hex[strlen((char*)buf) * 2 + 1] = '\0';
+
+    LOGW("DroidBox: {\"RecvNet\": { \"srchost\": \"%s\", \"srcport\": \"%d\", \"data\": \"%s\", \"fd\":\"%d\", \"type\": \"TCP\" } }", srchost, port, hex, id);
+    delete[] hex;
+		env->ReleaseStringUTFChars(name, srchost);
+    
     return bytesReceived;
 }
 
@@ -1344,6 +1387,15 @@ static void OSNetworkSystem_close(JNIEnv* env, jobject, jobject fileDescriptor) 
     int oldFd = fd.get();
     jniSetFileDescriptorOfFD(env, fileDescriptor, -1);
     AsynchronousSocketCloseMonitor::signalBlockedThreads(oldFd);
+
+    int port = fd.getPort();
+    int id = fd.getId();
+    jstring name = fd.getName();
+		const char* desthost = env->GetStringUTFChars(name, 0);
+    
+    LOGW("DroidBox: {\"CloseNet\": { \"desthost\": \"%s\", \"destport\": \"%d\", \"fd\":\"%d\"}}", desthost, port, id);
+		env->ReleaseStringUTFChars(name, desthost);
+
     close(oldFd);
 }
 

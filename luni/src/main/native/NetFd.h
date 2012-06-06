@@ -39,6 +39,15 @@ public:
     int get() const {
         return mFd;
     }
+    int getPort() const {
+        return jniGetPortFromFileDescriptor(mEnv, mFileDescriptor);
+    }
+    jstring getName() {
+        return jniGetNameFromFileDescriptor(mEnv, mFileDescriptor);
+    }
+    int getId() const{
+        return jniGetIdFromFileDescriptor(mEnv, mFileDescriptor);
+    }
 
 private:
     JNIEnv* mEnv;

@@ -75,7 +75,8 @@ public final class FileDescriptor {
      */
     public FileDescriptor() {
         super();
-        this.id++;
+				this.id = this.gid;
+				this.gid++;
     }
 
     /**
@@ -125,7 +126,8 @@ public final class FileDescriptor {
      * Hack for keeping track of descriptors
      * @hide
      */
-    public static int id = 0;
+    public final int id;
+		public static int gid = 0;
 
     /**
      * hack for printing out IP address
