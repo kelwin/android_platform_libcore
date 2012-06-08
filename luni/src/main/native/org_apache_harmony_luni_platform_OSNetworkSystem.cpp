@@ -764,7 +764,7 @@ static jint OSNetworkSystem_readDirect(JNIEnv* env, jobject, jobject fileDescrip
     }
     hex[strlen((char*)dst) * 2 + 1] = '\0';
 
-        LOGW("DroidBox: {\"RecvNet\": { \"srchost\": \"%s\", \"srcport\": \"%d\", \"data\": \"%s\", \"fd\":\"%d\", \"type\": \"TCP\" } }", srchost, port, hex, id);
+        LOGW("DroidBox: {\"RecvNet\": { \"srchost\": \"%s\", \"srcport\": \"%d\", \"data\": \"%s\", \"fd\":\"%d\" } }", srchost, port, hex, id);
         delete[] hex;
 				env->ReleaseStringUTFChars(name, srchost);
         return bytesReceived;
@@ -851,7 +851,7 @@ static jint OSNetworkSystem_recvDirect(JNIEnv* env, jobject, jobject fileDescrip
     }
     hex[strlen((char*)buf) * 2 + 1] = '\0';
 
-    LOGW("DroidBox: {\"RecvNet\": { \"srchost\": \"%s\", \"srcport\": \"%d\", \"data\": \"%s\", \"fd\":\"%d\", \"type\": \"TCP\" } }", srchost, port, hex, id);
+    LOGW("DroidBox: {\"RecvNet\": { \"srchost\": \"%s\", \"srcport\": \"%d\", \"data\": \"%s\", \"fd\":\"%d\", \"type\": \"UDP\" } }", srchost, port, hex, id);
     delete[] hex;
 		env->ReleaseStringUTFChars(name, srchost);
     

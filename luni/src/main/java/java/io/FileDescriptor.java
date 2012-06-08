@@ -127,6 +127,10 @@ public final class FileDescriptor {
      * @hide
      */
     public final int id;
+    /**
+     * Hack for keeping track of descriptors
+     * @hide
+     */
 		public static int gid = 0;
 
     /**
